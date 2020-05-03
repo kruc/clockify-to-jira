@@ -1,0 +1,36 @@
+version: '2'
+
+tasks:
+  run:
+    desc: Run code
+    cmds:
+      - go run ./
+    silent: true
+
+  compile:
+    cmds:
+      - goreleaser --snapshot --skip-publish --rm-dist
+
+  build:
+    desc: Build code
+    cmds:
+      - task: compile
+      - cp ./dist/clockify-to-jira_darwin_amd64/clockify-to-jira ./
+
+  install:
+    desc: Install code
+    cmds:
+      - task: compile
+      - cp ./dist/clockify-to-jira_darwin_amd64/clockify-to-jira $GOPATH/bin/clockify-to-jira
+
+  dry-release:
+    desc: "Build packages"
+    cmds:
+      - goreleaser --snapshot --skip-publish --rm-dist
+    silent: true
+
+  release:
+    desc: "Build packages and release"
+    cmds:
+      - goreleaser --rm-dist
+    silent: true

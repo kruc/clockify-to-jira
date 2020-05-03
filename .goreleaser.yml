@@ -1,0 +1,66 @@
+# This is an example goreleaser.yaml file with some sane defaults.
+# Make sure to check the documentation at http://goreleaser.com
+before:
+  hooks:
+    # you may remove this if you don't use vgo
+    - go mod tidy
+    # you may remove this if you don't need go generate
+    - go generate ./...
+builds:
+- ldflags:
+  - -X 'main.BuildVersion={{.Tag}}'
+  - -X 'main.GitCommit={{.ShortCommit}}'
+  - -X 'main.BuildDate={{time "01.02.2006 15:04:05"}}'
+  env:
+  - CGO_ENABLED=0
+  goos:
+    - darwin
+    - linux
+    - windows
+  goarch:
+    - amd64
+archives:
+- replacements:
+    darwin: Darwin
+    linux: Linux
+    windows: Windows
+    386: i386
+    amd64: x86_64
+checksum:
+  name_template: 'checksums.txt'
+snapshot:
+  name_template: "{{ .Tag }}"
+changelog:
+  sort: asc
+  filters:
+    exclude:
+    - '^docs:'
+    - '^test:'
+release:
+  draft: false
+
+brews:
+- name: clockify-to-jira
+  github:
+    owner: kruc
+    name: homebrew-tap
+
+  url_template: "https://github.com/kruc/clockify-to-jira/releases/download/{{ .Tag }}/{{ .ArtifactName }}"
+
+  commit_author:
+    name: kruc
+    email: jacek.ciwis@gmail.com
+
+  # Folder inside the repository to put the formula.
+  # Default is the root folder.
+  folder: Formula
+
+  # Caveats for the user of your binary.
+  # Default is empty.
+  caveats: "Run and read"
+
+  homepage: "https://example.com/"
+
+  description: "Software to migrate time entries from clockify to jira."
+
+  skip_upload: false
