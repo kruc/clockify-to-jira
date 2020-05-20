@@ -56,5 +56,5 @@ func clockifyTokenConfig() globalConfigKey {
 	return globalConfigKey{"", "clockify_token", "(visit https://clockify.me/user/settings)", true}
 }
 func workspaceIDConfig() globalConfigKey {
-	return globalConfigKey{"", "workspace_id", "5ea45df86103616e625312f4", false}
+	return globalConfigKey{"", "workspace_id", "(visit https://clockify.me/workspaces click settings and get id from url)", true}
 }
