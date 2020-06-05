@@ -231,8 +231,16 @@ func adjustClockifyDate(clockifyDate time.Time) time.Time {
 func parseIssueID(value string) string {
 	fields := s.Fields(value)
 
-	return fields[0]
+	return trimBrackets(fields[0])
 }
+
+func trimBrackets(issueID string) string {
+	trimmedissueID := s.TrimPrefix(issueID, "[")
+	trimmedissueID = s.TrimSuffix(trimmedissueID, "]")
+
+	return trimmedissueID
+}
+
 func parseIssueComment(value string) string {
 	fields := s.Fields(value)
 
