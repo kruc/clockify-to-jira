@@ -8,6 +8,7 @@ import (
 
 	"github.com/andygrunwald/go-jira"
 	clockifyapi "github.com/kruc/clockify-api"
+	"github.com/kruc/clockify-api/gctimeentry"
 	log "github.com/sirupsen/logrus"
 	flag "github.com/spf13/pflag"
 	"github.com/spf13/viper"
@@ -22,16 +23,22 @@ type clockifyData struct {
 	timeSpentSeconds int
 }
 
+type doskoDebugInfo struct {
+	originalTime string
+	doskoTime    string
+}
+
 type clockifyTags map[string]string
 
 var (
-	globalConfig globalConfigType
-	config       = "config"
-	configPath   string
-	logFile      *os.File
-	debug        bool
-	applyMode    bool
-	version      bool
+	globalConfig   globalConfigType
+	config         = "config"
+	configPath     string
+	logFile        *os.File
+	debug          bool
+	applyMode      bool
+	clientSelector string
+	version        bool
 	// BuildVersion info
 	BuildVersion string
 	// BuildDate info
@@ -55,6 +62,7 @@ func init() {
 	flag.StringVarP(&globalConfig.workspaceID, "workspace", "w", globalConfig.workspaceID, "Clockify workspace id")
 	flag.IntVarP(&globalConfig.defaultClient.stachurskyMode, "tryb-niepokorny", "t", globalConfig.defaultClient.stachurskyMode, "Rounding up the value of logged time up (minutes)")
 	flag.BoolVarP(&version, "version", "v", false, "Display version")
+	flag.StringVarP(&clientSelector, "client", "c", "", "Migrate time entries from given client")
 	flag.Parse()
 
 	// Prepare logger
@@ -88,10 +96,23 @@ func main() {
 	end := time.Now()
 	start := end.Add(time.Hour * 24 * time.Duration(globalConfig.period) * -1)
 
-	timeEntries, err := timeEntryClient.GetRange(start, end, globalConfig.workspaceID, currentUser.ID)
+	queryParameters := gctimeentry.QueryParameters{
+		Start:    start,
+		End:      end,
+		Hydrated: true,
+		PageSize: 150,
+	}
+
+	timeEntries, err := timeEntryClient.GetRange(queryParameters, globalConfig.workspaceID, currentUser.ID)
+
 	if err != nil {
 		log.Error(err)
 		return
+	}
+
+	if clientSelector != "" {
+		mapedTimeEntries := timeEntries.ToMap()
+		timeEntries = mapedTimeEntries[s.ToLower(clientSelector)]
 	}
 
 	for _, timeEntry := range timeEntries {
@@ -99,7 +120,7 @@ func main() {
 			continue
 		}
 
-		log.Info(fmt.Sprintf("Start processing %v: %v", timeEntry.ID, timeEntry.Description))
+		log.Info(fmt.Sprintf("Start processing: %v", timeEntry.Description))
 
 		if timeEntry.ProjectID == "" {
 			log.WithFields(log.Fields{
@@ -123,8 +144,8 @@ func main() {
 		}
 
 		clientConfig := parseClientConfig(clientConfigPath, globalConfig)
-
-		timeSpentSeconds := dosko(getTimeDiff(timeEntry.TimeInterval.Start, timeEntry.TimeInterval.End), clientConfig.stachurskyMode)
+		timeDiff := getTimeDiff(timeEntry.TimeInterval.Start, timeEntry.TimeInterval.End)
+		timeSpentSeconds, doskoDebugInfo := dosko(timeDiff, clientConfig.stachurskyMode)
 
 		clockifyData := clockifyData{
 			client:           s.ToLower(timeEntry.Project.ClientName),
@@ -149,14 +170,14 @@ func main() {
 			TimeSpentSeconds: clockifyData.timeSpentSeconds,
 			Started:          &tt,
 		}
-		issueURL := fmt.Sprintf("%v/browse/%v", clientConfig.jiraHost, clockifyData.issueID)
-		if !applyMode {
-			fmt.Println("\nWorkload details:")
-			fmt.Printf("Time spent: %+v\n", time.Duration(worklogRecord.TimeSpentSeconds)*time.Second)
-			fmt.Printf("Comment: %+v\n", worklogRecord.Comment)
-			fmt.Printf("Issue url: %v\n", issueURL)
-			fmt.Println("------------------------")
-		}
+		log.Infof("------------------------\n")
+		log.Infof("Workload details:")
+		log.Infof("------------------------\n")
+		log.Infof("Client: %+v\n", clockifyData.client)
+		log.Infof("Project: %+v\n", clockifyData.project)
+		log.Infof("Time spent: %+v (clockify: %+v stachurskyMode: %+vm)\n", doskoDebugInfo.doskoTime, doskoDebugInfo.originalTime, clientConfig.stachurskyMode)
+		log.Infof("Comment: %+v\n", worklogRecord.Comment)
+
 		if applyMode == true {
 
 			jwr, jr, err := jiraClient.Issue.AddWorklogRecord(clockifyData.issueID, &worklogRecord)
@@ -175,7 +196,6 @@ func main() {
 				timeEntry.AddTag(clockifyTags[globalConfig.jiraMigrationSuccessTag].ID)
 				log.Info(fmt.Sprintf("Add %v tag", globalConfig.jiraMigrationSuccessTag))
 			}
-			log.Info(fmt.Sprintf("Issue url: %v", issueURL))
 			// TODO: Create timeEntry update struct
 			timeEntry.Start = timeEntry.TimeInterval.Start
 			timeEntry.End = timeEntry.TimeInterval.End
@@ -186,12 +206,14 @@ func main() {
 					"timeEntry": te,
 				}).Error(err)
 			}
+			issueURL := fmt.Sprintf("%v/browse/%v?focusedWorklogId=%s", clientConfig.jiraHost, clockifyData.issueID, "123")
+			log.Infof("Issue url: %v\n", issueURL)
 			log.Info(fmt.Sprintf("Finish processing %v: %v", timeEntry.ID, timeEntry.Description))
 		}
 	}
 }
 
-func dosko(timeSpentSeconds, stachurskyMode int) int {
+func dosko(timeSpentSeconds, stachurskyMode int) (int, doskoDebugInfo) {
 
 	d, err := time.ParseDuration(fmt.Sprintf("%vs", timeSpentSeconds))
 	if err != nil {
@@ -205,12 +227,12 @@ func dosko(timeSpentSeconds, stachurskyMode int) int {
 		roundedValue = stachurskyFactor
 	}
 
-	if !applyMode {
-		fmt.Printf("%s - clockify value\n", d.String())
-		fmt.Printf("%s - stachursky mode (%vm) \n", roundedValue.String(), stachurskyMode)
+	doskoDebugInfo := doskoDebugInfo{
+		originalTime: d.String(),
+		doskoTime:    roundedValue.String(),
 	}
 
-	return int(roundedValue.Seconds())
+	return int(roundedValue.Seconds()), doskoDebugInfo
 }
 
 func removeTag(tagsList []string, tagToRemove string) []string {
