@@ -1,30 +1,30 @@
-# toggl-to-jira
+# clockify-to-jira
 
-### What is toggl-to-jira
+### What is clockify-to-jira
 
-Toggl-to-jira is an application which allows you to migrate toggl time entries into multiple jira instances.
+Clockify-to-jira is an application which allows you to migrate clockify time entries into multiple jira instances.
 
 ### How it works
 
-Toggl-to-jira takes toggl time entries from the given time period and it creates workloads in related jira issues. To work properly each toogle timeentry has to be assigned to the client. Base on this assignment and app configuration, application recognize in which jira instance should create workloads.
+Clockify-to-jira takes clockify time entries from the given time period and it creates workloads in related jira issues. To work properly each toogle timeentry has to be assigned to the client. Base on this assignment and app configuration, application recognize in which jira instance should create workloads.
 
 ### Installation
 
 MacOS Homebrew:
 
 ```
-brew install kruc/homebrew-tap/toggl-to-jira
+brew install kruc/homebrew-tap/clockify-to-jira
 ```
 
 Linux
 
 ```
- wget -qO- https://github.com/kruc/toggl-to-jira/releases/download/v0.7.1/toggl-to-jira_0.7.1_Linux_x86_64.tar.gz | tar -xvz -C /usr/local/bin && chmod +x /usr/local/bin/toggl-to-jira
+ wget -qO- https://github.com/kruc/clockify-to-jira/releases/download/v0.4.0/clockify-to-jira_0.4.0_Linux_x86_64.tar.gz | tar -xvz -C /usr/local/bin && chmod +x /usr/local/bin/clockify-to-jira
 ```
 
 ### Requirements
 
-1. Toggl time entries naming convention
+1. Clockify time entries naming convention
 
     ```
     [JIRA-ISSUE-ID] [WORKLOAD DESCRIPTION]
@@ -42,13 +42,13 @@ Linux
 
 ### First run
 
-1. Run toggl-to-jira without parameters
+1. Run clockify-to-jira without parameters
 
 ```
-toggl-to-jira
+clockify-to-jira
 ```
 
-it will generate configuration at `$HOME/.toggl-to-jira/config.yaml`
+it will generate configuration at `$HOME/.clockify-to-jira/config.yaml`
 
 ```yaml
 default_client:
@@ -63,7 +63,7 @@ jira_migration_success_tag: logged
 log_format: text
 log_output: stdout
 period: 1
-toggl_token: (visit https://clockify.me/user/settings)
+clockify_token: (visit https://clockify.me/user/settings)
 ```
 
 2. Adjust following keys:
@@ -71,17 +71,17 @@ toggl_token: (visit https://clockify.me/user/settings)
     - default_client.jira_host
     - default_client.jira_password
     - default_client.jira_username
-    - toggl_token
+    - clockify_token
 
 3. Run again to check what time entries will be considered
 
     ```
-    toggl-to-jira
+    clockify-to-jira
 
     INFO[0000] Checking configuration...
-    INFO[0000] Customize configuration in file: /Users/jacekciwis/.toggl-to-jira/config.yaml
+    INFO[0000] Customize configuration in file: /Users/jacekciwis/.clockify-to-jira/config.yaml
     INFO[0000] Start processing 1478671803: ISSUE-123 Work description
-    51m32s - toggl value
+    51m32s - clockify value
     52m0s - stachursky mode (1m)
 
     Workload details:
@@ -107,12 +107,12 @@ toggl_token: (visit https://clockify.me/user/settings)
 5. If everything is correct, run with the `--apply` flag
 
     ```bash
-    toggl-to-jira --apply
+    clockify-to-jira --apply
     ```
 
     ```bash
     INFO[0000] Checking configuration...
-    INFO[0000] Customize configuration in file: $HOME/.toggl-to-jira/config.yaml
+    INFO[0000] Customize configuration in file: $HOME/.clockify-to-jira/config.yaml
     INFO[0000] Start processing 1478671803: ISSUE-123 Work description
     INFO[0001] Jira workload added
     INFO[0001] Add logged tag
@@ -120,6 +120,6 @@ toggl_token: (visit https://clockify.me/user/settings)
     INFO[0002] Finish processing 1478671803: ISSUE-123 Work description
     ```
 
-6. After migration success toggl time entry will be tag with `jira_migration_success_tag` configuration key value (default: `logged`) - this tag causes skip on next migration
+6. After migration success clockify time entry will be tag with `jira_migration_success_tag` configuration key value (default: `logged`) - this tag causes skip on next migration
 7. If you want to skip some time entry migration, tag it with `jira_migration_skip_tag` configuration key value (default: `jira-migration-skip`)
-8. After migration fail toggl time entry will be tag with `jira_migration_failed_tag` configuration key value (default: `jira-migration-failed`) - this tag will be remove after migration success
+8. After migration fail clockify time entry will be tag with `jira_migration_failed_tag` configuration key value (default: `jira-migration-failed`) - this tag will be remove after migration success
