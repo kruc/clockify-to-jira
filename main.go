@@ -258,9 +258,10 @@ func parseIssueID(value string) string {
 
 func trimBrackets(issueID string) string {
 	trimmedissueID := s.TrimPrefix(issueID, "[")
+	trimmedissueID = s.TrimSuffix(trimmedissueID, ":")
 	trimmedissueID = s.TrimSuffix(trimmedissueID, "]")
 
-	return trimmedissueID
+  return trimmedissueID
 }
 
 func parseIssueComment(value string) string {
