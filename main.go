@@ -7,11 +7,12 @@ import (
 	"time"
 
 	"github.com/andygrunwald/go-jira"
-	clockifyapi "github.com/kruc/clockify-api"
-	"github.com/kruc/clockify-api/gctimeentry"
 	log "github.com/sirupsen/logrus"
 	flag "github.com/spf13/pflag"
 	"github.com/spf13/viper"
+
+	clockifyapi "github.com/kruc/clockify-api"
+	"github.com/kruc/clockify-api/gctimeentry"
 )
 
 type clockifyData struct {
@@ -115,12 +116,13 @@ func main() {
 		timeEntries = mapedTimeEntries[s.ToLower(clientSelector)]
 	}
 
+	summary := summary{start: start, end: end}
 	for _, timeEntry := range timeEntries {
 		if timeEntry.IsTagged(globalConfig.jiraMigrationSuccessTag) || timeEntry.IsTagged(globalConfig.jiraMigrationSkipTag) {
 			continue
 		}
-
-		log.Info(fmt.Sprintf("Start processing: %v", timeEntry.Description))
+		log.Infof("\n")
+		log.Info(fmt.Sprintf("Worklog: %v", timeEntry.Description))
 
 		if timeEntry.ProjectID == "" {
 			log.WithFields(log.Fields{
@@ -147,6 +149,11 @@ func main() {
 		timeDiff := getTimeDiff(timeEntry.TimeInterval.Start, timeEntry.TimeInterval.End)
 		timeSpentSeconds, doskoDebugInfo := dosko(timeDiff, clientConfig.stachurskyMode)
 
+		summary.increaseTimeEntryCount()
+		summary.addTimeEntryDuration(timeDiff)
+		summary.addDoskoTimeEntryDuration(timeSpentSeconds)
+		summary.addDoskoFactor(clientConfig.stachurskyMode)
+
 		clockifyData := clockifyData{
 			client:           s.ToLower(timeEntry.Project.ClientName),
 			project:          s.ToLower(timeEntry.Project.Name),
@@ -170,9 +177,7 @@ func main() {
 			TimeSpentSeconds: clockifyData.timeSpentSeconds,
 			Started:          &tt,
 		}
-		log.Infof("------------------------\n")
-		log.Infof("Workload details:")
-		log.Infof("------------------------\n")
+		log.Infof("-------")
 		log.Infof("Client: %+v\n", clockifyData.client)
 		log.Infof("Project: %+v\n", clockifyData.project)
 		log.Infof("Time spent: %+v (clockify: %+v stachurskyMode: %+vm)\n", doskoDebugInfo.doskoTime, doskoDebugInfo.originalTime, clientConfig.stachurskyMode)
@@ -210,7 +215,9 @@ func main() {
 			log.Infof("Issue url: %v\n", issueURL)
 			log.Info(fmt.Sprintf("Finish processing %v: %v", timeEntry.ID, timeEntry.Description))
 		}
+
 	}
+	summary.show()
 }
 
 func dosko(timeSpentSeconds, stachurskyMode int) (int, doskoDebugInfo) {
@@ -261,7 +268,7 @@ func trimBrackets(issueID string) string {
 	trimmedissueID = s.TrimSuffix(trimmedissueID, ":")
 	trimmedissueID = s.TrimSuffix(trimmedissueID, "]")
 
-  return trimmedissueID
+	return trimmedissueID
 }
 
 func parseIssueComment(value string) string {
