@@ -6,7 +6,6 @@ import (
 
 	log "github.com/sirupsen/logrus"
 )
-
 type summary struct {
 	start          time.Time
 	end            time.Time
@@ -53,7 +52,6 @@ func (s *summary) getTotalDoskoTime() string {
 }
 
 func (s *summary) show() {
-	timeFormat := "2006-01-02 15:04:05"
 	log.Infof("\n")
 	log.Infof("---------")
 	log.Infof("Summary:")

@@ -48,6 +48,8 @@ var (
 	GitCommit string
 )
 
+const timeFormat = "2006-01-02 15:04:05"
+
 func init() {
 
 	if !checkConfiguration() {
@@ -180,6 +182,7 @@ func main() {
 		log.Infof("-------")
 		log.Infof("Client: %+v\n", clockifyData.client)
 		log.Infof("Project: %+v\n", clockifyData.project)
+		log.Infof("Date: %+v\n", clockifyData.started.Format(timeFormat))
 		log.Infof("Time spent: %+v (clockify: %+v stachurskyMode: %+vm)\n", doskoDebugInfo.doskoTime, doskoDebugInfo.originalTime, clientConfig.stachurskyMode)
 		log.Infof("Comment: %+v\n", worklogRecord.Comment)
 

@@ -41,7 +41,7 @@ release:
 
 brews:
 - name: clockify-to-jira
-  github:
+  tap:
     owner: kruc
     name: homebrew-tap
 
