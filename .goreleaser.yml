@@ -6,11 +6,12 @@ before:
     - go mod tidy
     # you may remove this if you don't need go generate
     - go generate ./...
+    - go test
 builds:
 - ldflags:
-  - -X 'main.BuildVersion={{.Tag}}'
-  - -X 'main.GitCommit={{.ShortCommit}}'
-  - -X 'main.BuildDate={{time "01.02.2006 15:04:05"}}'
+  - -X 'github.com/kruc/clockify-to-jira/internal/version.BuildVersion={{.Tag}}'
+  - -X 'github.com/kruc/clockify-to-jira/internal/version.GitCommit={{.ShortCommit}}'
+  - -X 'github.com/kruc/clockify-to-jira/internal/version.BuildDate={{time "01.02.2006 15:04:05"}}'
   env:
   - CGO_ENABLED=0
   goos:

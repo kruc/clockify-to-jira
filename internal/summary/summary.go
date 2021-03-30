@@ -1,4 +1,4 @@
-package main
+package summary
 
 import (
 	"fmt"
@@ -6,32 +6,34 @@ import (
 
 	log "github.com/sirupsen/logrus"
 )
-type summary struct {
-	start          time.Time
-	end            time.Time
+
+type Details struct {
+	Start          time.Time
+	End            time.Time
 	entriesCount   int
 	totalTime      int
 	totalDoskoTime int
 	doskoFactor    int
+	TimeFormat     string
 }
 
-func (s *summary) increaseTimeEntryCount() {
+func (s *Details) IncreaseTimeEntryCount() {
 	s.entriesCount++
 }
 
-func (s *summary) addTimeEntryDuration(timeEntryDuration int) {
+func (s *Details) AddTimeEntryDuration(timeEntryDuration int) {
 	s.totalTime += timeEntryDuration
 }
 
-func (s *summary) addDoskoTimeEntryDuration(timeEntryDuration int) {
+func (s *Details) AddDoskoTimeEntryDuration(timeEntryDuration int) {
 	s.totalDoskoTime += timeEntryDuration
 }
 
-func (s *summary) addDoskoFactor(doskoFactor int) {
+func (s *Details) AddDoskoFactor(doskoFactor int) {
 	s.doskoFactor = doskoFactor
 }
 
-func (s *summary) getTotalTime() string {
+func (s *Details) getTotalTime() string {
 	parsedDuration, err := time.ParseDuration(fmt.Sprintf("%ds", s.totalTime))
 
 	if err != nil {
@@ -41,7 +43,7 @@ func (s *summary) getTotalTime() string {
 	return parsedDuration.String()
 }
 
-func (s *summary) getTotalDoskoTime() string {
+func (s *Details) getTotalDoskoTime() string {
 	parsedDuration, err := time.ParseDuration(fmt.Sprintf("%ds", s.totalDoskoTime))
 
 	if err != nil {
@@ -51,12 +53,12 @@ func (s *summary) getTotalDoskoTime() string {
 	return parsedDuration.String()
 }
 
-func (s *summary) show() {
+func (s *Details) Show() {
 	log.Infof("\n")
 	log.Infof("---------")
 	log.Infof("Summary:")
 	log.Infof("---------")
-	log.Infof("Time entries range: %v - %v\n", s.start.Format(timeFormat), s.end.Format(timeFormat))
+	log.Infof("Time entries range: %v - %v\n", s.Start.Format(s.TimeFormat), s.End.Format(s.TimeFormat))
 	log.Infof("Number of time entries: %+v\n", s.entriesCount)
 	log.Infof("Total time: %+v\n", s.getTotalTime())
 	log.Infof("Total dosko: %+v (t=%vm)\n", s.getTotalDoskoTime(), s.doskoFactor)
