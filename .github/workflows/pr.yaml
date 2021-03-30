@@ -1,4 +1,4 @@
-name: goreleaser
+name: Coverage
 
 on:
   pull_request:
@@ -19,9 +19,9 @@ jobs:
       - name: Calc coverage
         run: go test -v -covermode=count -coverprofile=coverage.out
       - name: Convert coverage to lcov
-        uses: jandelgado/gcov2lcov-action@v1.0.5
+        uses: jandelgado/gcov2lcov-action@v1.0.8
       - name: Coveralls
-        uses: coverallsapp/github-action@v1.0.4
+        uses: coverallsapp/github-action@v1.1.2
         with:
           github-token: ${{ secrets.github_token }}
           path-to-lcov: coverage.lcov
