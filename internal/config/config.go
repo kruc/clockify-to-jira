@@ -31,20 +31,20 @@ type GlobalConfigType struct {
 }
 
 var (
-  config = "config"
-  configPath     string
-  globalConfig GlobalConfigType
+	config       = "config"
+	configPath   string
+	globalConfig GlobalConfigType
 )
 
 func init() {
 
-  if !checkConfiguration() {
+	if !checkConfiguration() {
 		os.Exit(1)
 	}
 
-	globalConfig := parseGlobalConfig()
+	globalConfig = parseGlobalConfig()
 
-  flag.IntVarP(&globalConfig.Period, "period", "p", globalConfig.Period, "Migrate time entries from last given days")
+	flag.IntVarP(&globalConfig.Period, "period", "p", globalConfig.Period, "Migrate time entries from last given days")
 	flag.StringVarP(&globalConfig.LogFormat, "format", "f", globalConfig.LogFormat, "Log format (text|json)")
 	flag.StringVarP(&globalConfig.LogOutput, "output", "o", globalConfig.LogOutput, "Log output (stdout|filename)")
 	flag.StringVarP(&globalConfig.WorkspaceID, "workspace", "w", globalConfig.WorkspaceID, "Clockify workspace id")
@@ -53,10 +53,10 @@ func init() {
 
 // GetGlobalConfig provides global configuration
 func GetGlobalConfig() GlobalConfigType {
-  return globalConfig
+	return globalConfig
 }
 
-// CheckConfiguration validate configuration
+// checkConfiguration validate configuration
 func checkConfiguration() bool {
 
 	configPath = fmt.Sprintf("%v/.clockify-to-jira", os.Getenv("HOME"))
@@ -135,7 +135,7 @@ func GenerateClientConfigTemplate(configPath string) {
 	}).Info("Client config template created!\n")
 }
 
-// ParseGlobalConfig parsing config from confguration file
+// parseGlobalConfig parsing config from confguration file
 func parseGlobalConfig() GlobalConfigType {
 	clientDefaultConfigPath := "default_client"
 
