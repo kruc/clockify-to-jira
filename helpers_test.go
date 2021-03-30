@@ -287,7 +287,14 @@ func Test_getTimeDiff(t *testing.T) {
 		args args
 		want int
 	}{
-		// TODO: Add test cases.
+		{
+      name: "Normal diff",
+      args: args{
+        start: time.Now(),
+        stop: time.Now().Add(10 * time.Second),
+      },
+      want: 10,
+    },
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

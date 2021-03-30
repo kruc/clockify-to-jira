@@ -6,6 +6,7 @@ before:
     - go mod tidy
     # you may remove this if you don't need go generate
     - go generate ./...
+    - go test
 builds:
 - ldflags:
   - -X 'github.com/kruc/clockify-to-jira/internal/version.BuildVersion={{.Tag}}'
