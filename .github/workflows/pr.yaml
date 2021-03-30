@@ -17,7 +17,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v2
       - name: Prepare app config
-        run: cp ./internal/config/ci-config.yaml /home/runner/.clockify-to-jira/config.yaml
+        run: mkdir -p /home/runner/.clockify-to-jira/; cp ./internal/config/ci-config.yaml /home/runner/.clockify-to-jira/config.yaml
       - name: Calc coverage
         run: go test -v -covermode=count -coverprofile=coverage.out
       - name: Convert coverage to lcov
