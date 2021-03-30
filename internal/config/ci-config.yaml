@@ -1,0 +1,14 @@
+clockify_token: token
+default_client:
+  jira_client_user: github.actions
+  jira_host: https://headstart.atlassian.net
+  jira_password: api-token
+  jira_username: github.actions@domain.com
+  stachursky_mode: 1
+jira_migration_failed_tag: jira-migration-failed
+jira_migration_skip_tag: jira-migration-skip
+jira_migration_success_tag: logged
+log_format: text
+log_output: stdout
+period: 1
+workspace_id: workspace_id
