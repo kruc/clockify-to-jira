@@ -111,7 +111,10 @@ func main() {
 	summary := summary.Details{Start: start, End: end, TimeFormat: timeFormat}
 
 	for _, timeEntry := range timeEntries {
-		if (timeEntry.IsTagged(globalConfig.JiraMigrationSuccessTag) || timeEntry.IsTagged(globalConfig.JiraMigrationSkipTag)) && !debugMode {
+		if (timeEntry.IsTagged(globalConfig.JiraMigrationSuccessTag) ||
+			timeEntry.IsTagged(globalConfig.JiraMigrationSkipTag) ||
+			timeEntry.TimeInterval.Duration == "") &&
+			!debugMode {
 			continue
 		}
 
