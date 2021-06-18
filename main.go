@@ -71,6 +71,10 @@ func main() {
 	configureLogger(globalConfig.LogFormat, globalConfig.LogOutput)
 
 	clockifyClient, err := clockifyapi.NewClient(viper.GetString("clockify_token"))
+
+	if err != nil {
+		panic(err.Error())
+	}
 	timeEntryClient := clockifyClient.TimeEntryClient
 	userClient := clockifyClient.UserClient
 	tagClient := clockifyClient.TagClient
