@@ -1,4 +1,4 @@
-version: '2'
+version: "2"
 
 tasks:
   run:
@@ -15,7 +15,7 @@ tasks:
     desc: Build code
     cmds:
       - task: compile
-      - cp ./dist/clockify-to-jira_darwin_amd64/clockify-to-jira ./
+      - cp ./dist/clockify-to-jira_darwin_all/clockify-to-jira ./
 
   install:
     desc: Install code

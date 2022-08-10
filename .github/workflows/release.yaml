@@ -16,7 +16,7 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v1
         with:
-          go-version: 1.16.x
+          go-version: 1.18.x
       - name: Prepare app config
         run: mkdir -p /home/runner/.clockify-to-jira/; cp ./internal/config/ci-config.yaml /home/runner/.clockify-to-jira/config.yaml
       - name: Run GoReleaser
