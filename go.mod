@@ -31,7 +31,7 @@ require (
 	github.com/throttled/throttled v2.2.4+incompatible // indirect
 	github.com/trivago/tgo v1.0.1 // indirect
 	golang.org/x/sys v0.0.0-20220808155132-1c4a2a72c664 // indirect
-	golang.org/x/text v0.3.0 // indirect
+	golang.org/x/text v0.3.8 // indirect
 	gopkg.in/ini.v1 v1.51.0 // indirect
 	gopkg.in/yaml.v2 v2.2.4 // indirect
 )
