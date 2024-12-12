@@ -1,59 +1,53 @@
-version: "2"
+version: "3"
 
 tasks:
-  run:
+  go:run:
     desc: Run code
     cmds:
       - go run ./
-    silent: true
 
-  compile:
+  goreleaser:check:
+    desc: Validate configuration
     cmds:
-      - goreleaser --snapshot --skip-publish --rm-dist
+      - goreleaser check
 
-  build:
-    desc: Build code
-    cmds:
-      - task: compile
-      - cp ./dist/clockify-to-jira_darwin_all/clockify-to-jira ./
-
-  install:
-    desc: Install code
-    cmds:
-      - task: compile
-      - cp ./dist/clockify-to-jira_darwin_amd64/clockify-to-jira $GOPATH/bin/clockify-to-jira
-
-  dry-release:
+  goreleaser:release:dry:
     desc: "Build packages"
     cmds:
-      - goreleaser --snapshot --skip-publish --rm-dist
-    silent: true
+      - goreleaser release --snapshot --clean
 
-  release:
+  goreleaser:build:
+    desc: Build code
+    cmds:
+      - task: goreleaser:release:dry
+      - cp ./dist/clockify-to-jira_darwin_all/clockify-to-jira ./
+
+  goreleaser:release:
     desc: "Build packages and release"
     cmds:
-      - goreleaser --rm-dist
-    silent: true
+      - goreleaser --clean
 
   git:tag:patch:
     desc: Create semver patch tag (v0.0.1)
     cmds:
       - git semver patch
-    silent: true
 
   git:tag:minor:
     desc: Create semver minor tag (v0.1.0)
     cmds:
       - git semver minor
-    silent: true
 
   git:tag:major:
     desc: Create semver minor tag (v1.0.0)
     cmds:
       - git semver major
-    silent: true
 
   git:push:
     desc: Push to repo
     cmds:
-      - git push origin master --tags
+      - git push origin main --tags
+
+  semver:install:
+    desc: Install semver plugin https://github.com/markchalloner/git-semver
+    cmds:
+      - (git clone https://github.com/markchalloner/git-semver.git && sudo git-semver/install.sh)

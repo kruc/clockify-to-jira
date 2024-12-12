@@ -1,6 +1,6 @@
 module github.com/kruc/clockify-to-jira
 
-go 1.18
+go 1.23
 
 require (
 	github.com/andygrunwald/go-jira v1.12.0
