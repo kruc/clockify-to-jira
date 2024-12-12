@@ -19,8 +19,19 @@ jobs:
         with:
           go-version: stable
 
+      - name: Run GoReleaser
+        uses: goreleaser/goreleaser-action@v6
+        with:
+          install-only: true
+
       - name: Prepare app config
         run: mkdir -p /home/runner/.clockify-to-jira/; cp ./internal/config/ci-config.yaml /home/runner/.clockify-to-jira/config.yaml
+
+      - name: Check goreleaser config
+        run: goreleaser check
+
+      - name: Goreleaser dry run release
+        run: goreleaser release --snapshot --clean
 
       - name: Calc coverage
         run: go test -v -covermode=count -coverprofile=coverage.out
