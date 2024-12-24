@@ -1,10 +1,23 @@
+# yaml-language-server: $schema=https://taskfile.dev/schema.json
 version: "3"
 
 tasks:
   go:run:
     desc: Run code
     cmds:
-      - go run ./
+      - go run ./ {{.CLI_ARGS}}
+
+  go:test:
+    desc: Test all packages
+    cmds:
+      - go test ./... -count=1 -cover -ldflags "{{.LDFLAGS | join " "}}" | grep -v -E 'github.com/kruc/clockify-to-jira/internal/({{.SKIP_PACKAGES | join "|"}})'
+    vars:
+      LDFLAGS:
+        - -X 'github.com/kruc/clockify-to-jira/internal/version.BuildVersion=v1.2.3'
+        - -X 'github.com/kruc/clockify-to-jira/internal/version.GitCommit=3dfbf35'
+        - -X 'github.com/kruc/clockify-to-jira/internal/version.BuildDate=08.10.2022 09:19:08'
+      SKIP_PACKAGES:
+        - assert
 
   goreleaser:check:
     desc: Validate configuration
@@ -38,7 +51,7 @@ tasks:
       - git semver minor
 
   git:tag:major:
-    desc: Create semver minor tag (v1.0.0)
+    desc: Create semver major tag (v1.0.0)
     cmds:
       - git semver major
 
@@ -51,3 +64,5 @@ tasks:
     desc: Install semver plugin https://github.com/markchalloner/git-semver
     cmds:
       - (git clone https://github.com/markchalloner/git-semver.git && sudo git-semver/install.sh)
+    status:
+      - test -d git-semver
