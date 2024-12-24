@@ -1,0 +1,40 @@
+wrong:
+  clockify_token: clockify-token
+  period: 1
+
+default_client:
+  jira_client_user: firstname.lastname
+  jira_host: https://jira.atlassian.net
+  jira_password: jira-password
+  jira_username: firstname.lastname@domain.io
+  stachursky_mode: 15
+
+default_workspace:
+  jira_migration_failed_tag: jira-migration-failed
+  jira_migration_skip_tag: jira-migration-skip
+  jira_migration_success_tag: logged
+
+workspaces:
+  ws_1:
+     workspace_id: ws-1
+    jira_migration_failed_tag: jira-migration-failed
+    jira_migration_skip_tag: jira-migration-skip
+    jira_migration_success_tag: logged
+    clients:
+      client_1:
+        enabled: true
+        jira_client_user: username
+        jira_host: https://domain.atlassian.net
+        jira_password: jirapassword-client-1
+        jira_username: username@domain.com
+      client_2:
+        enabled: false
+
+  ws_2:
+    workspace_id: ws-2
+    jira_migration_failed_tag: failed
+    jira_migration_skip_tag: skipped
+    jira_migration_success_tag: logged
+    clients:
+      client_3:
+        enabled: false

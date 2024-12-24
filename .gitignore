@@ -2,5 +2,5 @@
 clockify-to-jira
 
 dist/
-
+test-config.yaml
 git-semver

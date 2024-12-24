@@ -2,8 +2,7 @@ package version
 
 import (
 	"fmt"
-
-	flag "github.com/spf13/pflag"
+	"io"
 )
 
 var (
@@ -13,10 +12,6 @@ var (
 	VersionFlag  bool
 )
 
-func init() {
-	flag.BoolVarP(&VersionFlag, "version", "v", false, "Display version")
-}
-
-func DisplayVersion() {
-	fmt.Printf("BuildVersion: %s\tBuildDate: %s\tGitCommit: %s\n", BuildVersion, BuildDate, GitCommit)
+func ShowBuildDetails(w io.Writer) {
+	fmt.Fprintf(w, "BuildVersion: %s\tBuildDate: %s\tGitCommit: %s\n", BuildVersion, BuildDate, GitCommit)
 }

@@ -4,11 +4,9 @@ import (
 	"fmt"
 	s "strings"
 	"time"
-
-	"github.com/kruc/clockify-api/gctag"
 )
 
-func dosko(timeSpentSeconds, stachurskyMode int) (int, doskoDebugInfo) {
+func dosko(timeSpentSeconds, stachurskyMode int) (int, string, string) {
 
 	d, err := time.ParseDuration(fmt.Sprintf("%vs", timeSpentSeconds))
 	if err != nil {
@@ -22,31 +20,7 @@ func dosko(timeSpentSeconds, stachurskyMode int) (int, doskoDebugInfo) {
 		roundedValue = stachurskyFactor
 	}
 
-	doskoDebugInfo := doskoDebugInfo{
-		originalTime: d.String(),
-		doskoTime:    roundedValue.String(),
-	}
-
-	return int(roundedValue.Seconds()), doskoDebugInfo
-}
-
-func removeTag(tagsList []string, tagToRemove string) []string {
-	for i := 0; i < len(tagsList); i++ {
-		if tagsList[i] == tagToRemove {
-			tagsList = append(tagsList[:i], tagsList[i+1:]...)
-			i-- // form the remove item index to start iterate next item
-		}
-	}
-	return tagsList
-}
-
-func displayTagsName(tags []gctag.Tag) []string {
-	tagsName := []string{}
-	for _, tag := range tags {
-		tagsName = append(tagsName, tag.Name)
-	}
-
-	return tagsName
+	return int(roundedValue.Seconds()), d.String(), roundedValue.String()
 }
 
 func adjustClockifyDate(clockifyDate time.Time) time.Time {

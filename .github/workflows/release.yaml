@@ -6,7 +6,7 @@ on:
       - "*"
 
 jobs:
-  goreleaser:
+  release:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -19,13 +19,16 @@ jobs:
         with:
           go-version: stable
 
-      - name: Prepare app config
-        run: mkdir -p /home/runner/.clockify-to-jira/; cp ./internal/config/ci-config.yaml /home/runner/.clockify-to-jira/config.yaml
+      - name: Install Task
+        uses: arduino/setup-task@v2
+
+      - name: Run unit tests
+        run: task go:test
 
       - name: Run GoReleaser
         uses: goreleaser/goreleaser-action@v6
         with:
-          version: semver
+          version: ~> v2
           args: release --clean
         env:
           GITHUB_TOKEN: ${{ secrets.GORELEASER_GITHUB_TOKEN }}
