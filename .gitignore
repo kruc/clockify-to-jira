@@ -1,3 +1,6 @@
 .vscode
 clockify-to-jira
-dist
+
+dist/
+
+git-semver
