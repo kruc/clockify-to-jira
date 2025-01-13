@@ -4,11 +4,8 @@ version: 2
 
 before:
   hooks:
-    # you may remove this if you don't use vgo
     - go mod tidy
-    # you may remove this if you don't need go generate
-    - go generate ./...
-    - go test
+
 builds:
   - ldflags:
       - -X 'github.com/kruc/clockify-to-jira/internal/version.BuildVersion={{.Tag}}'
@@ -25,12 +22,6 @@ universal_binaries:
   - replace: true
 
 archives:
-  # - replacements:
-  #     darwin: Darwin
-  #     linux: Linux
-  #     windows: Windows
-  #     386: i386
-  #     amd64: x86_64
   - format: tar.gz
     # this name template makes the OS and Arch compatible with the results of `uname`.
     name_template: >-
@@ -77,7 +68,7 @@ brews:
     # Default is empty.
     caveats: "Run and read"
 
-    homepage: "https://example.com/"
+    homepage: "https://github.com/kruc/clockify-to-jira"
 
     description: "Software to migrate time entries from clockify to jira."
 

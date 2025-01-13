@@ -1,6 +1,12 @@
 # yaml-language-server: $schema=https://taskfile.dev/schema.json
 version: "3"
 
+vars:
+  LDFLAGS:
+    - -X 'github.com/kruc/clockify-to-jira/internal/version.BuildVersion=v1.2.3'
+    - -X 'github.com/kruc/clockify-to-jira/internal/version.GitCommit=3dfbf35'
+    - -X 'github.com/kruc/clockify-to-jira/internal/version.BuildDate=08.10.2022 09:19:08'
+
 tasks:
   go:run:
     desc: Run code
@@ -12,12 +18,13 @@ tasks:
     cmds:
       - go test ./... -count=1 -cover -ldflags "{{.LDFLAGS | join " "}}" | grep -v -E 'github.com/kruc/clockify-to-jira/internal/({{.SKIP_PACKAGES | join "|"}})'
     vars:
-      LDFLAGS:
-        - -X 'github.com/kruc/clockify-to-jira/internal/version.BuildVersion=v1.2.3'
-        - -X 'github.com/kruc/clockify-to-jira/internal/version.GitCommit=3dfbf35'
-        - -X 'github.com/kruc/clockify-to-jira/internal/version.BuildDate=08.10.2022 09:19:08'
       SKIP_PACKAGES:
         - assert
+
+  go:test:ci:
+    desc: Test all packages (for Github Actions)
+    cmds:
+      - go test ./... -count=1  -v -covermode=count -coverprofile=coverage.out -cover -ldflags "{{.LDFLAGS | join " "}}"
 
   goreleaser:check:
     desc: Validate configuration
