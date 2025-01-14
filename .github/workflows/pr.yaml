@@ -24,8 +24,8 @@ jobs:
         with:
           install-only: true
 
-      - name: Prepare app config
-        run: mkdir -p /home/runner/.clockify-to-jira/; cp ./internal/config/ci-config.yaml /home/runner/.clockify-to-jira/config.yaml
+      - name: Install Task
+        uses: arduino/setup-task@v2
 
       - name: Check goreleaser config
         run: goreleaser check
@@ -33,14 +33,12 @@ jobs:
       - name: Goreleaser dry run release
         run: goreleaser release --snapshot --clean
 
-      - name: Calc coverage
-        run: go test -v -covermode=count -coverprofile=coverage.out
-
-      - name: Convert coverage to lcov
-        uses: jandelgado/gcov2lcov-action@v1.1.1
+      - name: Run unit tests
+        run: task go:test:ci
 
       - name: Coveralls
         uses: coverallsapp/github-action@v2.3.4
         with:
           github-token: ${{ secrets.github_token }}
-          file: coverage.lcov
+          file: coverage.out
+          format: golang

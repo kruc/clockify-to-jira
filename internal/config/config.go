@@ -1,188 +1,105 @@
 package config
 
 import (
-	"fmt"
-	"os"
-
-	log "github.com/sirupsen/logrus"
-	flag "github.com/spf13/pflag"
-	"github.com/spf13/viper"
+	"slices"
+	"time"
 )
 
-// ClientConfig avaiable fields
-type ClientConfig struct {
-	JiraUsername   string
-	JiraPassword   string
-	JiraClientUser string
-	JiraHost       string
-	StachurskyMode int
-}
-
-// GlobalConfigType struct
-type GlobalConfigType struct {
-	DefaultClient           ClientConfig
-	Period                  int
-	LogFormat               string
-	LogOutput               string
-	JiraMigrationSuccessTag string
-	JiraMigrationFailedTag  string
-	JiraMigrationSkipTag    string
-	WorkspaceID             string
-}
-
-var (
-	config       = "config"
-	configPath   string
-	globalConfig GlobalConfigType
+const (
+	ErrWorkspaceNotFound             = ConfigErr("Cannot find workspace configuration")
+	ErrWorkspacesNotConfigured       = ConfigErr("Cannot find workspaces in configuration")
+	ErrWorkspacesNotMatchingSelector = ConfigErr("Cannot find workspaces matching provided selector")
 )
 
-func init() {
+type ConfigErr string
 
-	if !checkConfiguration() {
-		os.Exit(1)
-	}
-
-	globalConfig = parseGlobalConfig()
-
-	flag.IntVarP(&globalConfig.Period, "period", "p", globalConfig.Period, "Migrate time entries from last given days")
-	flag.StringVarP(&globalConfig.LogFormat, "format", "f", globalConfig.LogFormat, "Log format (text|json)")
-	flag.StringVarP(&globalConfig.LogOutput, "output", "o", globalConfig.LogOutput, "Log output (stdout|filename)")
-	flag.StringVarP(&globalConfig.WorkspaceID, "workspace", "w", globalConfig.WorkspaceID, "Clockify workspace id")
-	flag.IntVarP(&globalConfig.DefaultClient.StachurskyMode, "tryb-niepokorny", "t", globalConfig.DefaultClient.StachurskyMode, "Rounding up the value of logged time up (minutes)")
+func (e ConfigErr) Error() string {
+	return string(e)
 }
 
-// GetGlobalConfig provides global configuration
-func GetGlobalConfig() GlobalConfigType {
-	return globalConfig
+type Workspaces map[string]*Workspace
+
+type Global struct {
+	ClockifyToken string `yaml:"clockify_token"`
+	Period        int    `yaml:"period"`
 }
 
-// checkConfiguration validate configuration
-func checkConfiguration() bool {
+type Config struct {
+	Global           Global     `yaml:"global"`
+	DefaultClient    Client     `yaml:"default_client"`
+	DefaultWorkspace Workspace  `yaml:"default_workspace"`
+	Workspaces       Workspaces `yaml:"workspaces"`
+}
 
-	configPath = fmt.Sprintf("%v/.clockify-to-jira", os.Getenv("HOME"))
-	os.MkdirAll(configPath, 0755)
-	os.OpenFile(fmt.Sprintf("%v/%v.yaml", configPath, config), os.O_CREATE|os.O_RDWR, 0666)
+func (c *Config) GetWorkspace(workspaceId string) (*Workspace, error) {
 
-	viper.SetConfigName(config)
-	viper.AddConfigPath(configPath)
-	err := viper.ReadInConfig()
-	if err != nil {
-		panic(fmt.Errorf("Fatal error config file: %s", err))
+	workspace, ok := c.Workspaces[workspaceId]
+
+	if !ok {
+		return &Workspace{}, ErrWorkspaceNotFound
 	}
 
-	globalConfigKeys := []globalConfigKey{
-		jiraHostConfig("default_client"),
-		jiraPasswordConfig("default_client"),
-		jiraUsernameConfig("default_client"),
-		jiraClientUserConfig("default_client"),
-		stachurskyModeConfig("default_client"),
-		logFormatConfig(),
-		logOutputConfig(),
-		jiraMigrationSuccessTagConfig(),
-		jiraMigrationFailedTagConfig(),
-		jiraMigrationSkipTagConfig(),
-		periodConfig(),
-		clockifyTokenConfig(),
-		workspaceIDConfig(),
+	return workspace, nil
+}
+
+func (c *Config) FindWorkspaces(workspaceSelector []string) (Workspaces, error) {
+
+	workspaces := c.Workspaces
+
+	if len(workspaces) == 0 {
+		return Workspaces{}, ErrWorkspacesNotConfigured
 	}
 
-	configReady := true
-	log.Info("Checking configuration...")
-	for _, configKey := range globalConfigKeys {
-		if !viper.IsSet(configKey.fullName()) {
-			log.Warnf("Missing key: %v - config updated!\n", configKey.name)
-			viper.Set(fmt.Sprintf("%v", configKey.fullName()), configKey.defaultValue)
-			configReady = false
-		} else if configKey.requiresChange && viper.GetString(configKey.fullName()) == configKey.defaultValue {
+	if len(workspaceSelector) != 0 {
+		err := workspaces.filterBasedOnSelector(workspaceSelector)
 
-			log.Errorf("Invalid value for %v - change it", configKey.fullName())
-			configReady = false
+		if err != nil {
+			return nil, err
 		}
 	}
 
-	err = viper.WriteConfig()
-	if err != nil {
-		log.WithFields(log.Fields{
-			"configPath": configPath,
-		}).Error(err)
-		return false
-	}
-
-	log.Infof("Customize configuration in file: %v/config.yaml\n", configPath)
-
-	return configReady
+	return workspaces, nil
 }
 
-// GenerateClientConfigTemplate generate clients template
-func GenerateClientConfigTemplate(configPath string) {
-	fmt.Printf("Generating config template for %v...\n", configPath)
-	viper.Set(jiraUsernameConfig(configPath).fullName(), "FILL_IT OR REMOVE TO USE DEFAULT_CLIENT")
-	viper.Set(jiraPasswordConfig(configPath).fullName(), "FILL_IT OR REMOVE TO USE DEFAULT_CLIENT")
-	viper.Set(jiraClientUserConfig(configPath).fullName(), "FILL_IT OR REMOVE TO USE DEFAULT_CLIENT")
-	viper.Set(jiraHostConfig(configPath).fullName(), "FILL_IT OR REMOVE TO USE DEFAULT_CLIENT")
-	viper.Set(stachurskyModeConfig(configPath).fullName(), "FILL_IT OR REMOVE TO USE DEFAULT_CLIENT")
-	viper.Set(fmt.Sprintf("%v.%v", configPath, "enabled"), false)
-	err := viper.WriteConfig()
-
-	if err != nil {
-		log.WithFields(log.Fields{
-			"configPath": configPath,
-		}).Error(err)
-		return
-	}
-	log.WithFields(log.Fields{
-		"configPath": configPath,
-	}).Info("Client config template created!\n")
+func (c *Config) OverwritePeriodSetting(period int) {
+	c.Global.Period = period
 }
 
-// parseGlobalConfig parsing config from confguration file
-func parseGlobalConfig() GlobalConfigType {
-	clientDefaultConfigPath := "default_client"
+func (c *Config) OverwritePrecisionSetting(precision int) {
+	c.DefaultClient.StachurskyMode = precision
 
-	globalConfig := GlobalConfigType{
-		DefaultClient:           ParseClientConfig(clientDefaultConfigPath, globalConfig),
-		Period:                  viper.GetInt(periodConfig().name),
-		LogFormat:               viper.GetString(logFormatConfig().name),
-		LogOutput:               viper.GetString(logOutputConfig().name),
-		JiraMigrationSuccessTag: viper.GetString(jiraMigrationSuccessTagConfig().name),
-		JiraMigrationFailedTag:  viper.GetString(jiraMigrationFailedTagConfig().name),
-		JiraMigrationSkipTag:    viper.GetString(jiraMigrationSkipTagConfig().name),
-		WorkspaceID:             viper.GetString(workspaceIDConfig().name),
+	for key := range c.Workspaces {
+		c.Workspaces[key].overwritePrecisionSetting(precision)
 	}
-
-	return globalConfig
 }
 
-// ParseClientConfig parse client config
-func ParseClientConfig(clientConfigPath string, globalConfig GlobalConfigType) ClientConfig {
-
-	clientConfig := ClientConfig{
-		JiraUsername:   getString(jiraUsernameConfig(clientConfigPath).fullName(), globalConfig.DefaultClient.JiraUsername),
-		JiraPassword:   getString(jiraPasswordConfig(clientConfigPath).fullName(), globalConfig.DefaultClient.JiraPassword),
-		JiraClientUser: getString(jiraClientUserConfig(clientConfigPath).fullName(), globalConfig.DefaultClient.JiraClientUser),
-		JiraHost:       getString(jiraHostConfig(clientConfigPath).fullName(), globalConfig.DefaultClient.JiraHost),
-		StachurskyMode: getInt(stachurskyModeConfig(clientConfigPath).fullName(), globalConfig.DefaultClient.StachurskyMode),
-	}
-
-	if flag.CommandLine.Changed("tryb-niepokorny") {
-		clientConfig.StachurskyMode = globalConfig.DefaultClient.StachurskyMode
-	}
-
-	return clientConfig
+func (c *Config) GetTimeInterval(now *time.Time) (time.Time, time.Time) {
+	return now.AddDate(0, 0, -c.Global.Period), *now
 }
 
-func getString(key, defaultValue string) string {
-	if viper.IsSet(key) {
-		return viper.GetString(key)
+func (c *Config) combineWithDefaultConfig() Workspaces {
+
+	workspaceList := Workspaces{}
+
+	for key, workspace := range c.Workspaces {
+		workspaceList[key] = workspace.combineWithDefaultConfig(c.DefaultWorkspace, c.DefaultClient)
 	}
 
-	return defaultValue
+	return workspaceList
 }
 
-func getInt(key string, defaultValue int) int {
-	if viper.IsSet(key) {
-		return viper.GetInt(key)
+func (w *Workspaces) filterBasedOnSelector(selector []string) error {
+	for key := range *w {
+		if slices.Contains(selector, key) {
+			continue
+		}
+
+		delete(*w, key)
 	}
 
-	return defaultValue
+	if len(*w) == 0 {
+		return ErrWorkspacesNotMatchingSelector
+	}
+
+	return nil
 }
