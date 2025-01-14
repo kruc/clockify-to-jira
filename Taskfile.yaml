@@ -5,7 +5,7 @@ vars:
   LDFLAGS:
     - -X 'github.com/kruc/clockify-to-jira/internal/version.BuildVersion=v1.2.3'
     - -X 'github.com/kruc/clockify-to-jira/internal/version.GitCommit=3dfbf35'
-    - -X 'github.com/kruc/clockify-to-jira/internal/version.BuildDate=08.10.2022 09:19:08'
+    - -X 'github.com/kruc/clockify-to-jira/internal/version.BuildDate=2022.10.08 09:19:08'
 
 tasks:
   go:run:
